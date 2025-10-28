@@ -9,6 +9,7 @@ config.py
 draft.py
 demo.py
 bkup/
+dataset/
 
 # C extensions
 *.so
