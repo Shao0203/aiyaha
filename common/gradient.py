@@ -67,6 +67,17 @@ def numerical_gradient_2d(f, X):
 
 
 def numerical_gradient(f, x):
+    """
+    np.nditer: NumPy 提供的高效 N 维数组迭代器
+        x: 被迭代的数组（可以是多维）
+        flags=['multi_index']: 告诉迭代器在每次循环中维护当前元素的多维索引(tuple),可通过 it.multi_index 访问
+        op_flags=['readwrite']: 允许在迭代过程中读写数组元素（因为我们要临时把 x[idx] 改为 tmp_val + h,再改回去）
+    流程：
+        idx = it.multi_index 得到像 (0, 3, 2) 这样的索引。
+        用 x[idx] 访问并修改对应元素。
+        调用 f(x)(注意: f 需要接受整个数组 x)。
+        恢复原值并移动到下一个元素。
+    """
     h = 1e-4  # 0.0001
     grad = np.zeros_like(x)
 

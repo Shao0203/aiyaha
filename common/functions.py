@@ -1,7 +1,7 @@
 import numpy as np
 
 
-# activation function
+# --- Activation function
 def step_function(x):
     return (x > 0).astype(int)
 
@@ -14,18 +14,28 @@ def relu(x):
     return np.maximum(0, x)
 
 
-# output layer
+# --- Output layer
 def identity_function(x):
     return x
 
 
 def softmax(x):
-    max = np.max(x)
-    exp_x = np.exp(x - max)
-    return exp_x / np.sum(exp_x)
+    if x.ndim == 2:
+        # 转换x后，按每列操作（每列是一条数据）
+        x = x.T
+        x = x - np.max(x, axis=0)
+        y = np.exp(x) / np.sum(np.exp(x), axis=0)
+        return y.T
+        # 不转换x，直接按行/每条数据操作
+        # x = x - np.max(x, axis=1, keepdims=True)
+        # y = np.exp(x) / np.sum(np.exp(x), axis=1, keepdims=True)
+        # return y
+
+    x = x - np.max(x)  # 溢出对策
+    return np.exp(x) / np.sum(np.exp(x))
 
 
-# loss function
+# --- Loss function
 def mean_squared_error(y, t):
     return 0.5 * np.sum((y - t) ** 2)
 
@@ -56,17 +66,6 @@ def relu_grad(x):
 def softmax_loss(X, t):
     y = softmax(X)
     return cross_entropy_error(y, t)
-
-
-# def softmax(x):
-#     if x.ndim == 2:
-#         x = x.T
-#         x = x - np.max(x, axis=0)
-#         y = np.exp(x) / np.sum(np.exp(x), axis=0)
-#         return y.T
-
-#     x = x - np.max(x) # 溢出对策
-#     return np.exp(x) / np.sum(np.exp(x))
 
 
 # def cross_entropy_error_bk(y, t):
