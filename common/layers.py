@@ -69,9 +69,9 @@ class SoftmaxWithLoss:
 
     def backward(self, dout=1):
         batch_size = self.t.shape[0]
-        if self.t.size == self.y.size:  # 监督数据是one-hot-vector的情况
+        if self.t.size == self.y.size:  # 监督数据t是one-hot-vector的情况 [0,0,1,0,0]
             dx = (self.y - self.t) / batch_size
-        else:
+        else:                           # 监督数据t是整数标签的情况[2, 5, 8, 0, 3]
             dx = self.y.copy()
             dx[np.arange(batch_size), self.t] -= 1  # self.y中 对应的真实值位置 -1，
             dx /= batch_size
