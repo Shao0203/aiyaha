@@ -1,41 +1,99 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 
-yy = np.array([
-    [0.1, 0.2, 0.6, 0.05, 0.05],  # 对类别2预测概率0.6
-    [0.7, 0.1, 0.1, 0.05, 0.05],  # 对类别0预测概率0.7
-    [0.1, 0.1, 0.2, 0.5, 0.1]     # 对类别3预测概率0.5
-])
-t_one_hot = np.array([
-    [0, 0, 1, 0, 0],  # 标签2
-    [1, 0, 0, 0, 0],  # 标签0
-    [0, 0, 0, 1, 0]   # 标签3
-])
-t_labels = np.array([2, 0, 3])  # 同样的数据，用标签形式表示，直接存储正确类别的索引
-
-batch_size = yy.shape[0]
-indices = np.arange(batch_size)  # [0, 1, 2]
-print("样本索引:", indices)      # [0, 1, 2]
-print("真实标签:", t_labels)     # [2, 0, 3]
-
-selected_probs = yy[indices, t_labels]
-print("选中的概率:", selected_probs)  # [0.6, 0.7, 0.5]
-# 相当于：
-# y[0, 2] → 第0个样本，第2个类别的概率 = 0.6
-# y[1, 0] → 第1个样本，第0个类别的概率 = 0.7
-# y[2, 3] → 第2个样本，第3个类别的概率 = 0.5
+# 1. 先定义激活函数:
+# 这里Sigmoid和Relu都能自动处理多维数组，因为用了np.exp, np.maximum
+def identity_function(x):
+    return x
 
 
-def cross_entropy_one_hot(y, t):
-    return -np.sum(t * np.log(y + 1e-7)) / len(t)
+def step_single(x):
+    if x > 0:
+        return 1
+    else:
+        return 0
 
 
-def cross_entropy_label(y, t):
-    batch_size = y.shape[0]
-    return -np.sum(np.log(y[np.arange(batch_size), t] + 1e-7)) / batch_size
+def step(x):
+    return (x > 0).astype(int)
 
 
-result1 = cross_entropy_one_hot(yy, t_one_hot)
-result2 = cross_entropy_label(yy, t_labels)
-print(result1)      # 0.5202157462469678
-print(result2)      # 0.5202157462469678
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+
+def relu(x):
+    return np.maximum(0, x)
+
+
+def softmax(x):
+    return np.exp(x - np.max(x)) / np.sum(np.exp(x - np.max(x)))
+
+
+x = np.array([-2, 0, 3])
+xx = np.array([[-3, 0, 5], [0.5, 0, -0.8]])
+a = np.array([0.3, 2.9, 4.0])
+print(softmax(a))
+
+# 2. 再定义神经网络层
+
+
+# 3. 利用层 创建神经网络
+
+
+# 4. 训练 / 测试 神经网络
+
+
+"""3 layers network begins
+X = np.array([1.0, 0.5])
+
+W1 = np.array([[0.1, 0.3, 0.5], [0.2, 0.4, 0.6]])
+B1 = np.array([0.1, 0.2, 0.3])
+A1 = np.dot(X, W1) + B1
+Z1 = sigmoid(A1)
+
+W2 = np.array([[0.1, 0.4], [0.2, 0.5], [0.3, 0.6]])
+B2 = np.array([0.1, 0.2])
+A2 = np.dot(Z1, W2) + B2
+Z2 = sigmoid(A2)
+
+W3 = np.array([[0.1, 0.3], [0.2, 0.4]])
+B3 = np.array([0.1, 0.2])
+A3 = np.dot(Z2, W3) + B3
+Y = identity_function(A3)
+
+print(A1, Z1)
+print(A2, Z2)
+print(A3, Y)
+
+
+def init_network():
+    network = {}
+    network['W1'] = np.array([[0.1, 0.3, 0.5], [0.2, 0.4, 0.6]])
+    network['b1'] = np.array([0.1, 0.2, 0.3])
+    network['W2'] = np.array([[0.1, 0.4], [0.2, 0.5], [0.3, 0.6]])
+    network['b2'] = np.array([0.1, 0.2])
+    network['W3'] = np.array([[0.1, 0.3], [0.2, 0.4]])
+    network['b3'] = np.array([0.1, 0.2])
+    return network
+
+
+def forward(network, x):
+    W1, W2, W3 = network['W1'], network['W2'], network['W3']
+    b1, b2, b3 = network['b1'], network['b2'], network['b3']
+
+    a1 = np.dot(x, W1) + b1
+    z1 = sigmoid(a1)
+    a2 = np.dot(z1, W2) + b2
+    z2 = sigmoid(a2)
+    a3 = np.dot(z2, W3) + b3
+    y = identity_function(a3)
+    return y
+
+
+network = init_network()
+x = np.array([1.0, 0.5])
+y = forward(network, x)
+print(y)
+3 layers network ends"""
