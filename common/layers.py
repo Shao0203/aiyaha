@@ -62,6 +62,8 @@ class SoftmaxWithLoss:
         self.t = None       # 监督数据标签，反向传播必需
 
     def forward(self, x, t):
+        # 这里接收的参数x为Affine层forward方法返回的加权输入总和，
+        # 返回的self.y为softmax激活后的百分比数组，比如真值是2，[0.03, 0.003, 0.95, 0.01,...]
         self.t = t
         self.y = softmax(x)
         self.loss = cross_entropy_error(self.y, self.t)

@@ -46,7 +46,6 @@ def softmax(x):
 
 
 a = np.array([0.3, 2.9, 4.0])
-print(np.sum(softmax_single(a)))
 aa = np.array([[0.3, 2.9, 4.0], [-0.9, 1, 3], [3, 2, 1]])
 x3 = np.random.randn(2, 3, 4)  # 2个批次，每个3个样本，每个4个类别
 # print(softmax(a))
@@ -170,7 +169,7 @@ def predict(network, x):
     a2 = np.dot(z1, W2) + b2
     z2 = sigmoid(a2)
     a3 = np.dot(z2, W3) + b3
-    y = softmax(a3)     # 这里softmax只能处理一条数据
+    y = softmax_single(a3)     # 这里softmax只能处理一条数据
     return y
 
 
@@ -191,11 +190,12 @@ accuracy_cnt = 0
 batch_size = 100
 for i in range(0, len(x), batch_size):
     x_batch = x[i:i+batch_size]
-    y_batch = predict(network, x_batch) # 这里softmax预测的概率是错误的
-    p = np.argmax(y_batch, axis=1)      # 这里获得的预测结果相对位置是正确的
+    y_batch = predict(network, x_batch) # 这里softmax预测的概率是错误的 因为只能处理单条数据
+    p = np.argmax(y_batch, axis=1)      # 这里获得的预测结果的 最大值相对位置是正确的
     accuracy_cnt += np.sum(p == t[i:i+batch_size])
 print(f'Accuracy: {accuracy_cnt / len(x):.2%} \n')
-# # only look at the first 10 data
+
+# # 查看前10条数据的预测和真值对比情况
 p = np.argmax(predict(network, x[:10]), 1)
 print(p[:10])   # [7 2 1 0 4 1 4 9 6 9]
 print(t[:10])   # [7 2 1 0 4 1 4 9 5 9]
