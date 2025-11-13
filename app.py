@@ -45,24 +45,37 @@ def softmax(x):
     return np.exp(x) / np.sum(np.exp(x), axis=-1, keepdims=True)
 
 
-a = np.array([0.3, 2.9, 4.0])
-aa = np.array([[0.3, 2.9, 4.0], [-0.9, 1, 3], [3, 2, 1]])
-x3 = np.random.randn(2, 3, 4)  # 2个批次，每个3个样本，每个4个类别
-# print(softmax(a))
-# print(softmax(aa))
-# print(x3)
-# print(softmax(x3))
-# print("\n三维输入形状:", softmax(x3).shape)  # (2, 3, 4)
-# print("最后一个维度总和:", np.sum(softmax(x3), axis=-1))
+# 2. 定义损失函数
+def mean_squared_error(y, t):
+    return 0.5 * np.sum((y - t) ** 2, axis=-1)
 
 
-# 2. 再定义神经网络层 - todo
+t = [[0, 0, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]]
+y = [[0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0],
+     [0.1, 0.05, 0.1, 0.0, 0.05, 0.1, 0.0, 0.6, 0.0, 0.0]]
+mse = mean_squared_error(np.array(y), np.array(t))
+print(f'mse: {mse}')
+
+t = np.array([[0, 0, 1], [0, 1, 0]])
+y = np.array([[0.1, 0.05, 0.8], [0.3, 0.5, 0.2]])
+mse = mean_squared_error(y, t)
+print(f'mse: {mse}')
+# 每个样本误差
+loss_each = 0.5 * np.sum((y - t)**2, axis=-1)
+print(loss_each)  # [0.01375 0.095]
+
+# 整体平均误差
+loss_mean = 0.5 * np.mean((y - t)**2)
+print(loss_mean)  # 0.054375
 
 
-# 3. 利用层 创建神经网络 - todo
+# 3. 再定义神经网络层 - todo
 
 
-# 4. 训练 / 测试 神经网络 - todo
+# 4. 利用层 创建神经网络 - todo
+
+
+# 5. 训练 / 测试 神经网络 - todo
 
 
 """画图比较三种激活函数 Step/Sigmoid/ReLU 
