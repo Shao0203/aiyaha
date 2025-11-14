@@ -4,24 +4,29 @@ from dataset.mnist import load_mnist
 import pickle
 
 
-# 1. 先定义激活函数:
-def identity_function(x):
-    return x
-
-
-def step_single(x):
+# 公式的直接转换 只能处理输入x是单个值的情况
+def single_step(x):
     if x > 0:
         return 1
     else:
         return 0
 
 
-def softmax_single(x):
+def single_softmax(x):
     x -= np.max(x)
     return np.exp(x) / np.sum(np.exp(x))
 
 
-# 这里step, sigmoid, relu, softmax 都能自动处理多维数组
+def single_cross_entropy_error(y, t):
+    delta = 1e-7
+    return -np.sum(t * np.log(y + delta))
+
+
+# 1. 先定义激活函数:
+def identity_function(x):
+    return x
+
+
 def step(x):
     return (x > 0).astype(int)
 
@@ -50,23 +55,30 @@ def mean_squared_error(y, t):
     return 0.5 * np.sum((y - t) ** 2, axis=-1)
 
 
-t = [[0, 0, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]]
-y = [[0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0],
-     [0.1, 0.05, 0.1, 0.0, 0.05, 0.1, 0.0, 0.6, 0.0, 0.0]]
-mse = mean_squared_error(np.array(y), np.array(t))
-print(f'mse: {mse}')
+def mse(y, t):
+    return 0.5 * np.mean((y - t) ** 2)
 
-t = np.array([[0, 0, 1], [0, 1, 0]])
-y = np.array([[0.1, 0.05, 0.8], [0.3, 0.5, 0.2]])
-mse = mean_squared_error(y, t)
-print(f'mse: {mse}')
-# 每个样本误差
-loss_each = 0.5 * np.sum((y - t)**2, axis=-1)
-print(loss_each)  # [0.01375 0.095]
 
-# 整体平均误差
-loss_mean = 0.5 * np.mean((y - t)**2)
-print(loss_mean)  # 0.054375
+def cross_entropy_error(y, t):
+    # 统一输入格式,处理单条数据,转换给二维 y.ndim=2，y.shape=(1, 10)
+    if y.ndim == 1:
+        y = y.reshape(1, y.size)
+        t = t.reshape(1, t.size)
+    # 如果t是one-hot-vector，转换成整数解标签形式
+    if t.size == y.size:
+        t = t.argmax(axis=-1)
+    batch_size = y.shape[0]
+    return -np.sum(np.log(y[np.arange(batch_size), t] + 1e-7)) / batch_size
+
+
+y = np.array([0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0])
+y2 = np.array([0.1, 0.05, 0.1, 0.0, 0.05, 0.0, 0.0, 0.7, 0.0, 0.0])
+t = np.array([0, 0, 1, 0, 0, 0, 0, 0, 0, 0])
+t_label = np.array([2])
+tt = np.array([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 0, 0]])
+yy = np.array([[0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0],
+               [0.1, 0.05, 0.1, 0.0, 0.05, 0.0, 0.0, 0.7, 0.0, 0.0]])
+tt_labels = np.array([2, 7])
 
 
 # 3. 再定义神经网络层 - todo
@@ -80,9 +92,7 @@ print(loss_mean)  # 0.054375
 
 """画图比较三种激活函数 Step/Sigmoid/ReLU 
 x = np.arange(-5, 5, 0.1)
-y1 = step(x)
-y2 = sigmoid(x)
-y3 = relu(x)
+y1, y2, y3 = step(x), sigmoid(x), relu(x)
 plt.plot(x, y1, label='Step')
 plt.plot(x, y2, label='Sigmoid')
 plt.plot(x, y3, label='ReLU')
