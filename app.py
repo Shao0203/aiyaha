@@ -64,30 +64,47 @@ def cross_entropy_error(y, t):
     if y.ndim == 1:
         y = y.reshape(1, y.size)
         t = t.reshape(1, t.size)
-    # 如果t是one-hot-vector，转换成整数解标签形式
+    # 如果t是one-hot-vector，转换成标签形式
     if t.size == y.size:
         t = t.argmax(axis=-1)
     batch_size = y.shape[0]
     return -np.sum(np.log(y[np.arange(batch_size), t] + 1e-7)) / batch_size
 
 
-y = np.array([0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0])
+# 定义导数计算 数值微分法
+def numerical_diff(f, x):
+    h = 1e-4
+    return (f(x+h) - f(x-h)) / (2*h)
+
+
+def numerical_gradient(f, x):
+    h = 1e-4
+    grad = np.zeros_like(x)
+
+    for idx in range(x.size):
+        tmp_val = x[idx]
+        x[idx] = tmp_val + h
+        fxh1 = f(x)  # f(x+h)
+        x[idx] = tmp_val - h
+        fxh2 = f(x)  # f(x-h)
+
+        grad[idx] = (fxh1 - fxh2) / (2*h)
+        x[idx] = tmp_val
+
+    return grad
+
+
+# 再定义神经网络层 - todo
+# 利用层 创建神经网络 - todo
+# 训练 / 测试 神经网络 - todo
+y1 = np.array([0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0])
 y2 = np.array([0.1, 0.05, 0.1, 0.0, 0.05, 0.0, 0.0, 0.7, 0.0, 0.0])
-t = np.array([0, 0, 1, 0, 0, 0, 0, 0, 0, 0])
-t_label = np.array([2])
+t1 = np.array([0, 0, 1, 0, 0, 0, 0, 0, 0, 0])
+t2 = np.array([0, 0, 0, 0, 0, 0, 0, 1, 0, 0])
 tt = np.array([[0, 0, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 0, 0]])
-yy = np.array([[0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0],
-               [0.1, 0.05, 0.1, 0.0, 0.05, 0.0, 0.0, 0.7, 0.0, 0.0]])
+yy = np.array([[0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0], [
+              0.1, 0.05, 0.1, 0.0, 0.05, 0.0, 0.0, 0.7, 0.0, 0.0]])
 tt_labels = np.array([2, 7])
-
-
-# 3. 再定义神经网络层 - todo
-
-
-# 4. 利用层 创建神经网络 - todo
-
-
-# 5. 训练 / 测试 神经网络 - todo
 
 
 """画图比较三种激活函数 Step/Sigmoid/ReLU 
@@ -224,4 +241,22 @@ print(p[:10])   # [7 2 1 0 4 1 4 9 6 9]
 print(t[:10])   # [7 2 1 0 4 1 4 9 5 9]
 print(p[:10] == t[:10]) # [ True  True  True  True  True  True  True  True False  True]
 print(np.sum(p[:10] == t[:10])) # 9
+"""
+
+"""Mini batch
+(x_train, t_train), (x_test, t_test) = load_mnist(
+    flatten=True, normalize=True, one_hot_label=True)
+
+train_size = x_train.shape[0]
+batch_size = 100
+
+batch_mask = np.random.choice(train_size, batch_size)
+x_batch = x_train[batch_mask]
+t_batch = t_train[batch_mask]
+print('batch_mask:')
+print(batch_mask)
+print('x_batch')
+print(x_batch)
+print('t_batch')
+print(t_batch)
 """
