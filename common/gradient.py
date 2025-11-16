@@ -77,7 +77,7 @@ def numerical_gradient(f, x):
         用 x[idx] 访问并修改对应元素。
         调用 f(x)(注意: f 需要接受整个数组 x)。
         恢复原值并移动到下一个元素。
-    缺点：
+    缺点：计算量太大
         grads = {
             'W1': np.zeros((784, 50)),    # 39,200个梯度
             'b1': np.zeros(50),           # 50个梯度  
@@ -94,15 +94,16 @@ def numerical_gradient(f, x):
     it = np.nditer(x, flags=['multi_index'], op_flags=['readwrite'])
     while not it.finished:
         idx = it.multi_index
+
         tmp_val = x[idx]
-        x[idx] = float(tmp_val) + h
+        x[idx] = tmp_val + h
         fxh1 = f(x)  # f(x+h)
 
         x[idx] = tmp_val - h
         fxh2 = f(x)  # f(x-h)
         grad[idx] = (fxh1 - fxh2) / (2*h)
-
         x[idx] = tmp_val  # 还原值
+
         it.iternext()
 
     return grad
