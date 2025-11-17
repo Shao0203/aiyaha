@@ -34,12 +34,12 @@ class Sigmoid:
 
 class Affine:
     def __init__(self, W, b):
-        self.W = W
-        self.b = b
-        self.x = None
-        self.dW = None
-        self.db = None
-        self.original_x_shape = None  # 记录原始形状
+        self.W = W      # 正向用self.W, 反向self.W.T
+        self.b = b      # 正向用self.b
+        self.x = None   # 用于反向时x.T
+        self.dW = None  # 保存权重梯度，神经网络求梯度时从这取
+        self.db = None  # 保存偏置梯度，神经网络求梯度时从这取
+        self.original_x_shape = None    # # 记录x原始形状
 
     def forward(self, x):
         self.original_x_shape = x.shape  # 记录原始形状（用于处理非矩阵输入）
