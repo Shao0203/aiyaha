@@ -14,6 +14,14 @@ def relu(x):
     return np.maximum(0, x)
 
 
+def tanh(x):
+    return (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x))
+
+
+def tanh(x):
+    return 2 * sigmoid(2*x) - 1
+
+
 # --- Output layer
 def identity_function(x):
     return x
