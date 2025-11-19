@@ -5,6 +5,9 @@ from collections import OrderedDict
 from dataset.mnist import load_mnist
 
 
+"""复习3-5章节全部内容整套流程"""
+
+
 # 1. 定义激活函数:
 def identity_function(x):
     return x
@@ -16,6 +19,10 @@ def step(x):
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
+
+
+def tanh(x):
+    return 2 * sigmoid(2*x) - 1
 
 
 def relu(x):
@@ -211,13 +218,13 @@ class TwoLayerNet:
 
     # 🆕 新增的模型保存和加载方法
     def save_model(self, filepath):
-        """保存模型参数到文件"""
+        # 保存模型参数到文件
         with open(filepath, 'wb') as f:
             pickle.dump(self.params, f)
         print(f"模型已保存到: {filepath}")
 
     def load_model(self, filepath):
-        """从文件加载模型参数"""
+        # 从文件加载模型参数
         with open(filepath, 'rb') as f:
             self.params = pickle.load(f)
         print(f"模型已从 {filepath} 加载")
