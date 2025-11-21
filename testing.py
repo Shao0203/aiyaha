@@ -1,124 +1,86 @@
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+from dataset.mnist import load_mnist
+from common.multi_layer_net_extend import MultiLayerNetExtend
+from common.optimizer import SGD, Adam
+
+(x_train, t_train), (x_test, t_test) = load_mnist(normalize=True)
+
+# 减少学习数据
+x_train = x_train[:1000]
+t_train = t_train[:1000]
+
+max_epochs = 20
+train_size = x_train.shape[0]
+batch_size = 100
+learning_rate = 0.01
 
 
-# fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(10, 8))
+def __train(weight_init_std):
+    bn_network = MultiLayerNetExtend(input_size=784, hidden_size_list=[100, 100, 100, 100, 100], output_size=10,
+                                     weight_init_std=weight_init_std, use_batchnorm=True)
+    network = MultiLayerNetExtend(input_size=784, hidden_size_list=[100, 100, 100, 100, 100], output_size=10,
+                                  weight_init_std=weight_init_std)
+    optimizer = SGD(lr=learning_rate)
 
-# axes[0, 0].plot([1, 2, 3], [1, 2, 1])  # 左上
-# axes[0, 0].set_title('left up')
+    train_acc_list = []
+    bn_train_acc_list = []
 
-# axes[0, 1].scatter([1, 2, 3], [1, 4, 2])  # 右上
-# axes[0, 1].set_title('mid up')
+    iter_per_epoch = max(train_size / batch_size, 1)
+    epoch_cnt = 0
 
-# axes[0, 2].scatter([1, 2, 3], [1, 4, 2])  # 右上
-# axes[0, 2].set_title('right up')
+    for i in range(1000000000):
+        batch_mask = np.random.choice(train_size, batch_size)
+        x_batch = x_train[batch_mask]
+        t_batch = t_train[batch_mask]
 
-# axes[1, 0].bar(['A', 'B', 'C'], [3, 7, 2])  # 左下
-# axes[1, 0].set_title('left down')
+        for _network in (bn_network, network):
+            grads = _network.gradient(x_batch, t_batch)
+            optimizer.update(_network.params, grads)
 
-# axes[1, 1].hist([1, 2, 2, 3, 3, 3, 4, 4, 5])  # 右下
-# axes[1, 1].set_title('mid down')
+        if i % iter_per_epoch == 0:
+            train_acc = network.accuracy(x_train, t_train)
+            bn_train_acc = bn_network.accuracy(x_train, t_train)
+            train_acc_list.append(train_acc)
+            bn_train_acc_list.append(bn_train_acc)
 
-# axes[1, 2].hist([1, 2, 2, 3, 3, 3, 4, 4, 5])  # 右下
-# axes[1, 2].set_title('right down')
+            print("epoch:" + str(epoch_cnt) + " | " +
+                  str(train_acc) + " - " + str(bn_train_acc))
 
-# fig.suptitle('Learn subplots', fontsize=16)
+            epoch_cnt += 1
+            if epoch_cnt >= max_epochs:
+                break
 
-# for i, ax in enumerate(axes.flat):
-#     ax.plot([i, i+1, i+2])
-#     ax.set_title(f'subFig {i+1}')
-
-# plt.tight_layout()
-
-# axes[1, 2].axis('off')
-# plt.show()
-
-
-# # 创建数据
-# x = np.linspace(0, 2*np.pi, 100)
-# y1 = np.sin(x)
-# y2 = np.cos(x)
-# y3 = np.tan(x)
-# y4 = np.exp(-x) * np.sin(x)
-
-# # 创建2x2子图
-# fig, axes = plt.subplots(2, 2, figsize=(12, 8), sharex=True)
-
-# # 在各个子图上绘图
-# axes[0, 0].plot(x, y1, 'r-', linewidth=2)
-# axes[0, 0].set_title('Sin')
-# axes[0, 0].grid(True)
-
-# axes[0, 1].plot(x, y2, 'b-', linewidth=2)
-# axes[0, 1].set_title('cos')
-# axes[0, 1].grid(True)
-
-# axes[1, 0].plot(x, y3, 'g-', linewidth=2)
-# axes[1, 0].set_title('tan')
-# axes[1, 0].set_ylim(-5, 5)
-# axes[1, 0].grid(True)
-
-# axes[1, 1].plot(x, y4, 'm-', linewidth=2)
-# axes[1, 1].set_title('decay')
-# axes[1, 1].grid(True)
-
-# # 添加总标题和调整布局
-# fig.suptitle('triangle functions', fontsize=16)
-# plt.tight_layout(rect=[0, 0, 1, 0.96])  # 为总标题留出空间
-# plt.show()
+    return train_acc_list, bn_train_acc_list
 
 
-# # 比较多个激活函数
-# fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+# 3.绘制图形==========
+weight_scale_list = np.logspace(0, -4, num=16)
+x = np.arange(max_epochs)
 
-# x = np.arange(-5, 5, 0.1)
+for i, w in enumerate(weight_scale_list):
+    print("============== " + str(i+1) + "/16" + " ==============")
+    train_acc_list, bn_train_acc_list = __train(w)
 
-# # Sigmoid
-# axes[0, 0].plot(x, 1/(1+np.exp(-x)))
-# axes[0, 0].set_title('Sigmoid')
-# axes[0, 0].grid(True)
+    plt.subplot(4, 4, i+1)
+    plt.title("W:" + str(w))
+    if i == 15:
+        plt.plot(x, bn_train_acc_list, label='Batch Normalization', markevery=2)
+        plt.plot(x, train_acc_list, linestyle="--",
+                 label='Normal(without BatchNorm)', markevery=2)
+    else:
+        plt.plot(x, bn_train_acc_list, markevery=2)
+        plt.plot(x, train_acc_list, linestyle="--", markevery=2)
 
-# # ReLU
-# axes[0, 1].plot(x, np.maximum(0, x))
-# axes[0, 1].set_title('ReLU')
-# axes[0, 1].grid(True)
-
-# # Tanh
-# axes[1, 0].plot(x, np.tanh(x))
-# axes[1, 0].set_title('Tanh')
-# axes[1, 0].grid(True)
-
-# # Leaky ReLU
-# axes[1, 1].plot(x, np.where(x > 0, x, 0.01*x))
-# axes[1, 1].set_title('Leaky ReLU')
-# axes[1, 1].grid(True)
-
-# plt.tight_layout()
-# plt.show()
-
-
-# # 训练过程中的损失和准确率对比
-# fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
-
-# # 损失函数曲线
-# ax1.plot(history['loss'], label='Training Loss')
-# ax1.plot(history['val_loss'], label='Validation Loss')
-# ax1.set_title('Loss over Epochs')
-# ax1.legend()
-
-# # 准确率曲线
-# ax2.plot(history['accuracy'], label='Training Accuracy')
-# ax2.plot(history['val_accuracy'], label='Validation Accuracy')
-# ax2.set_title('Accuracy over Epochs')
-# ax2.legend()
-
-# plt.tight_layout()
-# plt.show()
-
-
-fig, axes = plt.subplots(3, 1, figsize=(5, 10))
-
-for ax in axes:
-    ax.plot([1, 2, 3])
+    plt.ylim(0, 1.0)
+    if i % 4:
+        plt.yticks([])
+    else:
+        plt.ylabel("accuracy")
+    if i < 12:
+        plt.xticks([])
+    else:
+        plt.xlabel("epochs")
+    plt.legend(loc='lower right')
 
 plt.show()
