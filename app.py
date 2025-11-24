@@ -308,6 +308,31 @@ for i in range(iters_num):
 
 
 # 8. 绘制损失函数和训练/测试准确率的图形
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+# 左子图：损失函数
+x_loss = np.arange(len(train_loss_list))
+ax1.plot(x_loss, train_loss_list)
+ax1.set_xlabel('Iteration')
+ax1.set_ylabel('Loss')
+ax1.set_title('Training Loss')
+ax1.grid(True, linestyle='--', alpha=0.5)
+# 右子图：准确率
+x_acc = np.arange(len(train_acc_list))
+ax2.plot(x_acc, train_acc_list, label='Train Accuracy')
+ax2.plot(x_acc, test_acc_list, label='Test Accuracy', linestyle='--')
+ax2.set_xlabel('Epoch')
+ax2.set_ylabel('Accuracy')
+ax2.set_title('Training and Test Accuracy')
+ax2.set_ylim(0, 1.0)
+ax2.grid(True, linestyle='--', alpha=0.5)
+ax2.legend(loc='lower right')
+# 总标题
+fig.suptitle('Monitor model training process', fontsize=14)
+plt.tight_layout()
+plt.show()
+
+
+"""subplot传统画图方式-不推荐
 plt.figure(figsize=(12, 5))  # 设置图形大小
 # 左子图：损失函数
 plt.subplot(1, 2, 1)  # 1行2列的第1个图
@@ -332,7 +357,7 @@ plt.legend(loc='lower right')
 plt.tight_layout()
 # 显示图形
 plt.show()
-
+"""
 
 """画图比较三种激活函数 Step/Sigmoid/ReLU 
 x = np.arange(-5, 5, 0.1)
