@@ -5,15 +5,6 @@ from dataset.mnist import load_mnist
 import matplotlib.pyplot as plt
 
 
-# 1. activation & loss & numerical graident
-
-# 2. define layers
-
-
-# 3. create network
-
-
-# 4. Mnist dataset
 """ 
 # gradient check 
 x_batch = x_train[:3]
