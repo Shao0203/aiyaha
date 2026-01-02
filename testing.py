@@ -1,1 +1,1 @@
-print('Hello 2026!!!')
+print('A new year and new start~')
