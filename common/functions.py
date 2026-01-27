@@ -31,8 +31,8 @@ def softmax(x):
     """
     keepdims=True 保持维度结构，确保广播正确
     x = np.array([[1, 2, 3], [4, 5, 6]]) # 形状: (2,3)
-    np.max(x, axis=-1)                   # 形状: (2,)  ← 无法广播 [3, 6] 
-    np.max(x, axis=-1, keepdims=True)    # 形状: (2,1) ← 完美广播 [[3], [6]] 
+    np.max(x, axis=-1)                   # 值: [3, 6],    形状: (2,)  -> 无法广播
+    np.max(x, axis=-1, keepdims=True)    # 值: [[3], [6]] 形状: (2,1) -> 完美广播 
     """
     x = x - np.max(x, axis=-1, keepdims=True)
     return np.exp(x) / np.sum(np.exp(x), axis=-1, keepdims=True)
