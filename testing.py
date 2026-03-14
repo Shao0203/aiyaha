@@ -1,6 +1,8 @@
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import OrderedDict
+from dataset.mnist import load_mnist
 
 
 # 1. Activation function
@@ -146,7 +148,7 @@ class SoftmaxWithLoss:
 
 # 5. Define Neural Network with layers
 class TwoLayerNet:
-    def __init__(self, input, hidden, output, weight_std):
+    def __init__(self, input, hidden, output, weight_std=0.01):
         # init weight and bias
         self.params = {}
         self.params['W1'] = weight_std * np.random.randn(input, hidden)
@@ -157,7 +159,7 @@ class TwoLayerNet:
         self.layers = OrderedDict()
         self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
         self.layers['Relu'] = Relu()
-        self.layers['Affine2'] = Affine(self.parmas['W2'], self.params['b2'])
+        self.layers['Affine2'] = Affine(self.params['W2'], self.params['b2'])
         self.lastLayer = SoftmaxWithLoss()
 
     def predict(self, x):
@@ -179,4 +181,89 @@ class TwoLayerNet:
         return accuracy
 
     def numerical_grad(self, x, t):
-        pass
+        # loss_w = lambda W: self.loss(x, t)
+        def loss_W(W): return self.loss(x, t)
+        grads = {}
+        grads['W1'] = numerical_gradient(loss_W, self.params['W1'])
+        grads['W2'] = numerical_gradient(loss_W, self.params['W2'])
+        grads['b1'] = numerical_gradient(loss_W, self.params['b1'])
+        grads['b2'] = numerical_gradient(loss_W, self.params['b2'])
+        return grads
+
+    def gradient(self, x, t):
+        # forward
+        self.loss(x, t)
+        # backward
+        dout = self.lastLayer.backward()
+        layers = list(self.layers.values())
+        layers.reverse()
+        for layer in layers:
+            dout = layer.backward(dout)
+        # gradients
+        grads = {}
+        grads['W1'] = self.layers['Affine1'].dW
+        grads['b1'] = self.layers['Affine1'].db
+        grads['W2'] = self.layers['Affine2'].dW
+        grads['b2'] = self.layers['Affine2'].db
+        return grads
+
+    def save_model(self, filepath):
+        with open(filepath, 'wb') as f:
+            pickle.dump(self.params, f)
+        print(f'Model is saved to: {filepath}')
+
+    def load_model(self, filepath):
+        with open(filepath, 'rb') as f:
+            self.params = pickle.load(f)
+        print(f'Model is loaded from: {filepath}')
+        # re-init the layers with loaded params
+        self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
+        self.layers['Affine2'] = Affine(self.params['W2'], self.params['b2'])
+
+
+# 6. graident check with 3 mnist data
+# network = TwoLayerNet(784, 50, 10)
+# (x_train, t_train), (x_test, t_test) = load_mnist(one_hot_label=True)
+# x_batch = x_train[:3]
+# t_batch = t_train[:3]
+
+# grad_numerical = network.numerical_grad(x_batch, t_batch)
+# grad_backpropa = network.gradient(x_batch, t_batch)
+
+# for key in grad_numerical.keys():
+#     diff = np.average(np.abs(grad_numerical[key] - grad_backpropa[key]))
+#     print(f'{key}: {str(diff)}')
+
+
+# 7. Use mnist dataset to train/test the network
+network = TwoLayerNet(784, 50, 10)
+(x_train, t_train), (x_test, t_test) = load_mnist(one_hot_label=True)
+iters_num = 10000
+train_size = x_train.shape[0]
+batch_size = 100
+learning_rate = 0.1
+iter_per_epoch = max(train_size / batch_size, 1)
+train_loss_list = []
+train_acc_list = []
+test_acc_list = []
+
+for i in range(iters_num):
+    # 1) Get mini batch
+    batch_mask = np.random.choice(train_size, batch_size)
+    x_batch = x_train[batch_mask]
+    t_batch = t_train[batch_mask]
+    # 2) Calculate gradient
+    gradient = network.gradient(x_batch, t_batch)
+    # 3) Update network weights and bias
+    for key in ('W1', 'b1', 'W2', 'b2'):
+        network.params[key] -= learning_rate * gradient[key]
+    # 4) Record loss value
+    loss = network.loss(x_batch, t_batch)
+    train_loss_list.append(loss)
+    # 5) Record train/test accuracy of each epoch
+    if i % iter_per_epoch == 0:
+        train_acc = network.accuracy(x_train, t_train)
+        test_acc = network.accuracy(x_test, t_test)
+        train_acc_list.append(train_acc)
+        test_acc_list.append(test_acc)
+        print(f': {round(train_acc, 5)} | {round(test_acc, 5)}')
