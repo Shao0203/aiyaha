@@ -10,7 +10,7 @@ def identity_function(x):
     return x
 
 
-def step_function(x):
+def step_func(x):
     return (x > 0).astype(int)
 
 
@@ -19,7 +19,7 @@ def sigmoid(x):
 
 
 def tanh(x):
-    return 2 * sigmoid(x*2) - 1
+    return 2 * sigmoid(2*x) - 1
 
 
 def relu(x):
@@ -27,11 +27,11 @@ def relu(x):
 
 
 def softmax(x):
-    x -= np.max(x, axis=-1, keepdims=True)
+    x = x - np.max(x, axis=-1, keepdims=True)
     return np.exp(x) / np.sum(np.exp(x), axis=-1, keepdims=True)
 
 
-# 2. Loss functions
+# 2. Loss function
 def mean_squared_error(y, t):
     return 0.5 * np.sum((y - t) ** 2, axis=-1)
 
@@ -50,7 +50,7 @@ def cross_entropy_error(y, t):
     return -np.sum(np.log(y[np.arange(batch_size), t] + 1e-7)) / batch_size
 
 
-# 3. differentiation
+# 3. Gradient
 def numerical_diff(f, x):
     h = 1e-4
     return (f(x+h) - f(x-h)) / (2*h)
@@ -63,19 +63,18 @@ def numerical_gradient(f, x):
 
     while not it.finished:
         idx = it.multi_index
-        tmp_val = x[idx]
-        x[idx] = tmp_val + h
+        tmp = x[idx]
+        x[idx] = tmp + h
         fxh1 = f(x)
-        x[idx] = tmp_val - h
+        x[idx] = tmp - h
         fxh2 = f(x)
-        grad[idx] = (fxh1 - fxh2) / (2*h)
-        x[idx] = tmp_val
+        grad[idx] = (fxh1 - fxh2) / (2 * h)
+        x[idx] = tmp
         it.iternext()
-
     return grad
 
 
-# 4. Define network layers: Sigmoid, Relu, Affine, SoftmaxWithLoss
+# 4. Layers
 class Relu:
     def __init__(self):
         self.mask = None
@@ -135,27 +134,26 @@ class SoftmaxWithLoss:
         self.t = None
 
     def forward(self, x, t):
-        self.t = t
         self.y = softmax(x)
+        self.t = t
         self.loss = cross_entropy_error(self.y, self.t)
         return self.loss
 
     def backward(self, dout=1):
-        batch_size = self.t.shape[0]
+        batch_size = self.y.shape[0]
         dx = dout * (self.y - self.t) / batch_size
         return dx
 
 
-# 5. Define Neural Network with layers
+# 5. Networks Achitecture
 class TwoLayerNet:
-    def __init__(self, input, hidden, output, weight_std=0.01):
-        # init weight and bias
+    def __init__(self, input, hidden, output, weight_init_std=0.01):
         self.params = {}
-        self.params['W1'] = weight_std * np.random.randn(input, hidden)
-        self.params['W2'] = weight_std * np.random.randn(hidden, output)
+        self.params['W1'] = weight_init_std * np.random.randn(input, hidden)
         self.params['b1'] = np.zeros(hidden)
+        self.params['W2'] = weight_init_std * np.random.randn(hidden, output)
         self.params['b2'] = np.zeros(output)
-        # init layers
+
         self.layers = OrderedDict()
         self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
         self.layers['Relu'] = Relu()
@@ -181,12 +179,11 @@ class TwoLayerNet:
         return accuracy
 
     def numerical_grad(self, x, t):
-        # loss_w = lambda W: self.loss(x, t)
         def loss_W(W): return self.loss(x, t)
         grads = {}
         grads['W1'] = numerical_gradient(loss_W, self.params['W1'])
-        grads['W2'] = numerical_gradient(loss_W, self.params['W2'])
         grads['b1'] = numerical_gradient(loss_W, self.params['b1'])
+        grads['W2'] = numerical_gradient(loss_W, self.params['W2'])
         grads['b2'] = numerical_gradient(loss_W, self.params['b2'])
         return grads
 
@@ -210,60 +207,61 @@ class TwoLayerNet:
     def save_model(self, filepath):
         with open(filepath, 'wb') as f:
             pickle.dump(self.params, f)
-        print(f'Model is saved to: {filepath}')
+        print(f'Model is saved to {filepath}.')
 
     def load_model(self, filepath):
         with open(filepath, 'rb') as f:
             self.params = pickle.load(f)
-        print(f'Model is loaded from: {filepath}')
-        # re-init the layers with loaded params
+        print(f'Model is loaded from {filepath}.')
         self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
         self.layers['Affine2'] = Affine(self.params['W2'], self.params['b2'])
 
 
-# 6. graident check with 3 mnist data
-# network = TwoLayerNet(784, 50, 10)
+# 6. Gradient Check
 # (x_train, t_train), (x_test, t_test) = load_mnist(one_hot_label=True)
+# network = TwoLayerNet(784, 50, 10)
 # x_batch = x_train[:3]
 # t_batch = t_train[:3]
-
-# grad_numerical = network.numerical_grad(x_batch, t_batch)
-# grad_backpropa = network.gradient(x_batch, t_batch)
-
-# for key in grad_numerical.keys():
-#     diff = np.average(np.abs(grad_numerical[key] - grad_backpropa[key]))
+# num_grad = network.numerical_grad(x_batch, t_batch)
+# bck_grad = network.gradient(x_batch, t_batch)
+# for key in num_grad.keys():
+#     diff = np.average(np.abs(num_grad[key] - bck_grad[key]))
 #     print(f'{key}: {str(diff)}')
 
 
-# 7. Use mnist dataset to train/test the network
-network = TwoLayerNet(784, 50, 10)
+# 7. Mnist Training
 (x_train, t_train), (x_test, t_test) = load_mnist(one_hot_label=True)
+network = TwoLayerNet(784, 50, 10)
+# hyper-parameter
 iters_num = 10000
+learning_rate = 0.1
 train_size = x_train.shape[0]
 batch_size = 100
-learning_rate = 0.1
 iter_per_epoch = max(train_size / batch_size, 1)
+# records
 train_loss_list = []
 train_acc_list = []
 test_acc_list = []
 
 for i in range(iters_num):
-    # 1) Get mini batch
+    # 1) mini_batch
     batch_mask = np.random.choice(train_size, batch_size)
     x_batch = x_train[batch_mask]
     t_batch = t_train[batch_mask]
-    # 2) Calculate gradient
+    # 2) Calculate gradient and update weights and bias with it
     gradient = network.gradient(x_batch, t_batch)
-    # 3) Update network weights and bias
-    for key in ('W1', 'b1', 'W2', 'b2'):
+    for key in gradient.keys():
         network.params[key] -= learning_rate * gradient[key]
-    # 4) Record loss value
+    # 3) Calculate and record loss values
     loss = network.loss(x_batch, t_batch)
     train_loss_list.append(loss)
-    # 5) Record train/test accuracy of each epoch
+    # 4) Calculate train and test accuracy for each epoch
     if i % iter_per_epoch == 0:
         train_acc = network.accuracy(x_train, t_train)
         test_acc = network.accuracy(x_test, t_test)
         train_acc_list.append(train_acc)
         test_acc_list.append(test_acc)
-        print(f': {round(train_acc, 5)} | {round(test_acc, 5)}')
+        print(f'{int(i // iter_per_epoch)}: {train_acc:.2%} | {test_acc:.2%}')
+
+
+# 8. Plot
