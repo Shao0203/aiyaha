@@ -265,3 +265,25 @@ for i in range(iters_num):
 
 
 # 8. Plot
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+# sub-1
+x_loss = np.arange(len(train_loss_list))
+ax1.plot(x_loss, train_loss_list)
+ax1.set_xlabel('Iteration')
+ax1.set_ylabel('Loss Value')
+ax1.set_title('Training Loss')
+ax1.grid(True, linestyle='--', alpha=0.5)
+# sub-2
+x_acc = np.arange(len(train_acc_list))
+ax2.plot(x_acc, train_acc_list, label='Train Accuracy')
+ax2.plot(x_acc, test_acc_list, label='Test Accuracy', linestyle='--')
+ax2.set_xlabel('Epoch')
+ax2.set_ylabel('Accuracy')
+ax2.set_title('Train and Test Accuracy')
+ax2.set_ylim(0, 1.0)
+ax2.grid(True, linestyle='--', alpha=0.5)
+ax2.legend(loc='lower right')
+# Overall Title
+fig.suptitle('Monitor model training process', fontsize=14)
+plt.tight_layout()
+plt.show()
