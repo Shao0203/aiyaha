@@ -1,17 +1,21 @@
-import pickle
 import numpy as np
+import pickle
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 from dataset.mnist import load_mnist
 
 
-# 1. Activation function
-def identity_function(x):
+# 1. Activation
+def identity_func(x):
     return x
 
 
 def step_func(x):
     return (x > 0).astype(int)
+
+
+def relu(x):
+    return np.maximum(0, x)
 
 
 def sigmoid(x):
@@ -22,16 +26,12 @@ def tanh(x):
     return 2 * sigmoid(2*x) - 1
 
 
-def relu(x):
-    return np.maximum(0, x)
-
-
 def softmax(x):
-    x = x - np.max(x, axis=-1, keepdims=True)
+    x -= np.max(x, axis=-1, keepdims=True)
     return np.exp(x) / np.sum(np.exp(x), axis=-1, keepdims=True)
 
 
-# 2. Loss function
+# 2. Loss
 def mean_squared_error(y, t):
     return 0.5 * np.sum((y - t) ** 2, axis=-1)
 
@@ -53,14 +53,13 @@ def cross_entropy_error(y, t):
 # 3. Gradient
 def numerical_diff(f, x):
     h = 1e-4
-    return (f(x+h) - f(x-h)) / (2*h)
+    return (f(x+h) - f(x-h)) / (2 * h)
 
 
 def numerical_gradient(f, x):
     h = 1e-4
     grad = np.zeros_like(x)
     it = np.nditer(x, flags=['multi_index'], op_flags=['readwrite'])
-
     while not it.finished:
         idx = it.multi_index
         tmp = x[idx]
@@ -74,7 +73,21 @@ def numerical_gradient(f, x):
     return grad
 
 
-# 4. Layers
+# 4. Network layers
+class Sigmoid:
+    def __init__(self):
+        self.out = None
+
+    def forward(self, x):
+        out = 1 / (1 + np.exp(-x))
+        self.out = out
+        return out
+
+    def backward(self, dout):
+        dx = dout * (1.0 - self.out) * self.out
+        return dx
+
+
 class Relu:
     def __init__(self):
         self.mask = None
@@ -88,20 +101,6 @@ class Relu:
     def backward(self, dout):
         dout[self.mask] = 0
         dx = dout
-        return dx
-
-
-class Sigmoid:
-    def __init__(self):
-        self.out = None
-
-    def forward(self, x):
-        out = 1 / (1 + np.exp(-x))
-        self.out = out
-        return out
-
-    def backward(self, dout):
-        dx = dout * (1.0 - self.out) * self.out
         return dx
 
 
@@ -134,18 +133,19 @@ class SoftmaxWithLoss:
         self.t = None
 
     def forward(self, x, t):
-        self.y = softmax(x)
         self.t = t
+        self.y = softmax(x)
         self.loss = cross_entropy_error(self.y, self.t)
-        return self.loss
+        out = self.loss
+        return out
 
     def backward(self, dout=1):
-        batch_size = self.y.shape[0]
+        batch_size = self.t.shape[0]
         dx = dout * (self.y - self.t) / batch_size
         return dx
 
 
-# 5. Networks Achitecture
+# 5. Network achitecture
 class TwoLayerNet:
     def __init__(self, input, hidden, output, weight_init_std=0.01):
         self.params = {}
@@ -153,7 +153,6 @@ class TwoLayerNet:
         self.params['b1'] = np.zeros(hidden)
         self.params['W2'] = weight_init_std * np.random.randn(hidden, output)
         self.params['b2'] = np.zeros(output)
-
         self.layers = OrderedDict()
         self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
         self.layers['Relu'] = Relu()
@@ -196,7 +195,7 @@ class TwoLayerNet:
         layers.reverse()
         for layer in layers:
             dout = layer.backward(dout)
-        # gradients
+        # gradient
         grads = {}
         grads['W1'] = self.layers['Affine1'].dW
         grads['b1'] = self.layers['Affine1'].db
@@ -212,78 +211,68 @@ class TwoLayerNet:
     def load_model(self, filepath):
         with open(filepath, 'rb') as f:
             self.params = pickle.load(f)
-        print(f'Model is loaded from {filepath}.')
+        print(f'Model is loaded from {filepath}')
         self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
         self.layers['Affine2'] = Affine(self.params['W2'], self.params['b2'])
 
 
-# 6. Gradient Check
-# (x_train, t_train), (x_test, t_test) = load_mnist(one_hot_label=True)
-# network = TwoLayerNet(784, 50, 10)
+# 6. Mnist dataset
+# Gradient accuracy check
 # x_batch = x_train[:3]
 # t_batch = t_train[:3]
 # num_grad = network.numerical_grad(x_batch, t_batch)
-# bck_grad = network.gradient(x_batch, t_batch)
+# bak_grad = network.gradient(x_batch, t_batch)
 # for key in num_grad.keys():
-#     diff = np.average(np.abs(num_grad[key] - bck_grad[key]))
+#     diff = np.average(np.abs(num_grad[key] - bak_grad[key]))
 #     print(f'{key}: {str(diff)}')
-
-
-# 7. Mnist Training
 (x_train, t_train), (x_test, t_test) = load_mnist(one_hot_label=True)
 network = TwoLayerNet(784, 50, 10)
-# hyper-parameter
 iters_num = 10000
 learning_rate = 0.1
 train_size = x_train.shape[0]
 batch_size = 100
 iter_per_epoch = max(train_size / batch_size, 1)
-# records
 train_loss_list = []
 train_acc_list = []
 test_acc_list = []
 
 for i in range(iters_num):
-    # 1) mini_batch
+    # 1) mini batch
     batch_mask = np.random.choice(train_size, batch_size)
     x_batch = x_train[batch_mask]
     t_batch = t_train[batch_mask]
-    # 2) Calculate gradient and update weights and bias with it
-    gradient = network.gradient(x_batch, t_batch)
-    for key in gradient.keys():
-        network.params[key] -= learning_rate * gradient[key]
-    # 3) Calculate and record loss values
+    # 2) gradient and update params
+    grads = network.gradient(x_batch, t_batch)
+    for key in grads.keys():
+        network.params[key] -= learning_rate * grads[key]
+    # 3) loss
     loss = network.loss(x_batch, t_batch)
     train_loss_list.append(loss)
-    # 4) Calculate train and test accuracy for each epoch
+    # 4) print each epoch
     if i % iter_per_epoch == 0:
         train_acc = network.accuracy(x_train, t_train)
         test_acc = network.accuracy(x_test, t_test)
         train_acc_list.append(train_acc)
         test_acc_list.append(test_acc)
-        print(f'{int(i // iter_per_epoch)}: {train_acc:.2%} | {test_acc:.2%}')
+        print(f'{int(i / iter_per_epoch)}: {train_acc:.4f} | {test_acc:.4f}')
 
 
-# 8. Plot
+# 7. plot the loss and accuracy
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
-# sub-1
 x_loss = np.arange(len(train_loss_list))
 ax1.plot(x_loss, train_loss_list)
 ax1.set_xlabel('Iteration')
-ax1.set_ylabel('Loss Value')
-ax1.set_title('Training Loss')
+ax1.set_ylabel('Loss')
+ax1.set_title('Loss Value')
 ax1.grid(True, linestyle='--', alpha=0.5)
-# sub-2
 x_acc = np.arange(len(train_acc_list))
-ax2.plot(x_acc, train_acc_list, label='Train Accuracy')
-ax2.plot(x_acc, test_acc_list, label='Test Accuracy', linestyle='--')
+ax2.plot(x_acc, train_acc_list, label='Train Acc')
+ax2.plot(x_acc, test_acc_list, label='Test Acc', linestyle='--')
 ax2.set_xlabel('Epoch')
 ax2.set_ylabel('Accuracy')
 ax2.set_title('Train and Test Accuracy')
-ax2.set_ylim(0, 1.0)
 ax2.grid(True, linestyle='--', alpha=0.5)
 ax2.legend(loc='lower right')
-# Overall Title
-fig.suptitle('Monitor model training process', fontsize=14)
+plt.suptitle('Training and Testing Process')
 plt.tight_layout()
 plt.show()

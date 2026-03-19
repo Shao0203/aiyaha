@@ -50,7 +50,7 @@ def cross_entropy_error(y, t):
         t = t.reshape(1, t.size)
     # 如果t是one-hot-vector，转换成标签形式
     if t.ndim > 1 and t.size == y.size:
-        t = t.argmax(axis=-1)
+        t = np.argmax(t, axis=-1)
     batch_size = y.shape[0]
     return -np.sum(np.log(y[np.arange(batch_size), t] + 1e-7)) / batch_size
     # return -np.mean(np.log(y[np.arange(batch_size), t] + 1e-7)) # 也可以这么写
@@ -59,7 +59,7 @@ def cross_entropy_error(y, t):
 # 3. 定义导数计算 数值微分法
 def numerical_diff(f, x):   # 导数
     h = 1e-4
-    return (f(x+h) - f(x-h)) / (2*h)
+    return (f(x+h) - f(x-h)) / (2 * h)
 
 
 def numerical_gradient(f, x):   # 偏导数
@@ -74,7 +74,7 @@ def numerical_gradient(f, x):   # 偏导数
         fxh1 = f(x)
         x[idx] = tmp_val - h
         fxh2 = f(x)
-        grad[idx] = (fxh1 - fxh2) / (2*h)
+        grad[idx] = (fxh1 - fxh2) / (2 * h)
         x[idx] = tmp_val
         it.iternext()
 
@@ -144,7 +144,8 @@ class SoftmaxWithLoss:
         self.t = t
         self.y = softmax(x)
         self.loss = cross_entropy_error(self.y, self.t)
-        return self.loss
+        out = self.loss
+        return out
 
     def backward(self, dout=1):
         batch_size = self.t.shape[0]
@@ -304,7 +305,7 @@ for i in range(iters_num):
         test_acc = network.accuracy(x_test, t_test)
         train_acc_list.append(train_acc)
         test_acc_list.append(test_acc)
-        print(f'学习/测试准确率: {round(train_acc, 5)} | {round(test_acc, 5)}')
+        print(f'{int(i / iter_per_epoch)}: {train_acc:.4f} | {test_acc:.4f}')
 
 
 # 8. 绘制损失函数和训练/测试准确率的图形
