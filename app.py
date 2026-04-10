@@ -62,7 +62,7 @@ def numerical_diff(f, x):   # 导数
     return (f(x+h) - f(x-h)) / (2 * h)
 
 
-def numerical_gradient(f, x):   # 偏导数
+def numerical_grad(f, x):   # 偏导数
     h = 1e-4
     grad = np.zeros_like(x)
     it = np.nditer(x, flags=['multi_index'], op_flags=['readwrite'])
@@ -193,10 +193,10 @@ class TwoLayerNet:
     def numerical_gradient(self, x, t):
         def loss_W(W): return self.loss(x, t)
         grads = {}
-        grads['W1'] = numerical_gradient(loss_W, self.params['W1'])
-        grads['b1'] = numerical_gradient(loss_W, self.params['b1'])
-        grads['W2'] = numerical_gradient(loss_W, self.params['W2'])
-        grads['b2'] = numerical_gradient(loss_W, self.params['b2'])
+        grads['W1'] = numerical_grad(loss_W, self.params['W1'])
+        grads['b1'] = numerical_grad(loss_W, self.params['b1'])
+        grads['W2'] = numerical_grad(loss_W, self.params['W2'])
+        grads['b2'] = numerical_grad(loss_W, self.params['b2'])
         return grads
 
     def gradient(self, x, t):
