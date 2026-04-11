@@ -69,13 +69,13 @@ def numerical_grad(f, x):   # 偏导数
 
     while not it.finished:
         idx = it.multi_index
-        tmp_val = x[idx]
-        x[idx] = tmp_val + h
+        tmp = x[idx]
+        x[idx] = tmp + h
         fxh1 = f(x)
-        x[idx] = tmp_val - h
+        x[idx] = tmp - h
         fxh2 = f(x)
         grad[idx] = (fxh1 - fxh2) / (2 * h)
-        x[idx] = tmp_val
+        x[idx] = tmp
         it.iternext()
 
     return grad

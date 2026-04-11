@@ -1,4 +1,6 @@
 # 例子 1
+import matplotlib.pyplot as plt
+import numpy as np
 import logging
 case1 = [9, 8, 7, 3, 2, 2]
 case1.append(1)
