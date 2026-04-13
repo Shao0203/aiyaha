@@ -44,11 +44,10 @@ def cross_entropy_error(y, t):
     if y.ndim == 1:
         y = y.reshape(1, y.size)
         t = t.reshape(1, t.size)
-    if t.ndim > 1 and y.size == t.size:
+    if t.ndim > 1 and t.size == y.size:
         t = np.argmax(t, axis=-1)
     batch_size = y.shape[0]
     return -np.sum(np.log(y[np.arange(batch_size), t] + 1e-7)) / batch_size
-    # return -np.mean(np.log(y[np.arange(batch_size), t] + 1e-7))
 
 
 # 3. Numerical gradient
@@ -145,7 +144,7 @@ class SoftmaxWithLoss:
         return dx
 
 
-# 5. Network Architecture
+# 5. Network architecture
 class TwoLayerNet:
     def __init__(self, input, hidden, output, weight_init_std=0.01):
         self.params = {}
@@ -153,7 +152,6 @@ class TwoLayerNet:
         self.params['b1'] = np.zeros(hidden)
         self.params['W2'] = np.random.randn(hidden, output) * weight_init_std
         self.params['b2'] = np.zeros(output)
-
         self.layers = OrderedDict()
         self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
         self.layers['Relu'] = Relu()
@@ -173,8 +171,7 @@ class TwoLayerNet:
     def accuracy(self, x, t):
         y = self.predict(x)
         y = np.argmax(y, axis=-1)
-        if t.ndim != 1:
-            t = np.argmax(t, axis=-1)
+        t = np.argmax(t, axis=-1)
         accuracy = np.sum(y == t) / x.shape[0]
         return accuracy
 
@@ -188,20 +185,15 @@ class TwoLayerNet:
         return grads
 
     def gradient(self, x, t):
-        # forward
         self.loss(x, t)
-        # backward
         dout = self.lastLayer.backward()
         layers = list(self.layers.values())
-        layers.reverse()    # !!! Dont forget!!!
+        layers.reverse()
         for layer in layers:
             dout = layer.backward(dout)
-        # gradient
         grads = {}
-        grads['W1'] = self.layers['Affine1'].dW
-        grads['b1'] = self.layers['Affine1'].db
-        grads['W2'] = self.layers['Affine2'].dW
-        grads['b2'] = self.layers['Affine2'].db
+        grads['W1'], grads['b1'] = self.layers['Affine1'].dW, self.layers['Affine1'].db
+        grads['W2'], grads['b2'] = self.layers['Affine2'].dW, self.layers['Affine2'].db
         return grads
 
     def save_model(self, filepath):
@@ -219,7 +211,7 @@ class TwoLayerNet:
 
 # 6. Gradient check
 # network = TwoLayerNet(784, 50, 10)
-# (x_train, t_train), (x_test, t_test) = load_mnist(one_hot_label=True)
+# (x_train, t_train), _ = load_mnist(one_hot_label=True)
 # x_batch = x_train[:3]
 # t_batch = t_train[:3]
 # nume_grad = network.numerical_gradient(x_batch, t_batch)
@@ -232,11 +224,45 @@ class TwoLayerNet:
 # 7. Mnist dataset training process
 network = TwoLayerNet(784, 50, 10)
 (x_train, t_train), (x_test, t_test) = load_mnist(one_hot_label=True)
-print(x_train.shape)
-print(t_train.shape)
-print(t_train.ndim)
-print(t_train[-2:])
-t_train = np.argmax(t_train)
-print(t_train.shape)
-print(t_train.ndim)
-print(t_train)
+iters_num, learning_rate, train_size, batch_size = 10000, 0.1, x_train.shape[0], 100
+iter_per_epoch = max(1, train_size // batch_size)
+train_loss_list, train_acc_list, test_acc_list = [], [], []
+
+for i in range(iters_num):
+    # 1) mini batch
+    batch_mask = np.random.choice(train_size, batch_size)
+    x_batch = x_train[batch_mask]
+    t_batch = t_train[batch_mask]
+    # 2) calc gradient and update params
+    gradient = network.gradient(x_batch, t_batch)
+    for key in gradient.keys():
+        network.params[key] -= learning_rate * gradient[key]
+    # 3) calc loss
+    loss = network.loss(x_batch, t_batch)
+    train_loss_list.append(loss)
+    # 4) calc accuracy
+    if i % iter_per_epoch == 0:
+        train_acc = network.accuracy(x_train, t_train)
+        test_acc = network.accuracy(x_test, t_test)
+        train_acc_list.append(train_acc)
+        test_acc_list.append(test_acc)
+        print(f'Epoch{int(i / iter_per_epoch)}: {train_acc:.4f}|{test_acc:.4f}')
+
+
+# 8. Plot the training process
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+# left subplot is loss
+x_loss = np.arange(len(train_loss_list))
+ax1.plot(x_loss, train_loss_list)
+ax1.set(xlabel='Iteration', ylabel='Loss', title='Training loss')
+ax1.grid(True, ls='--', alpha=0.5)
+# right subplot is accuracy
+x_acc = np.arange(len(train_acc_list))
+ax2.plot(x_acc, train_acc_list, label='Train acc')
+ax2.plot(x_acc, test_acc_list, label='Test acc', ls=':')
+ax2.set(xlabel='Epoch', ylabel='Accuracy', title='Training accuracy')
+ax2.grid(True, ls='--', alpha=0.5)
+ax2.legend(loc='lower right')
+plt.suptitle('Monitor model training process')
+plt.tight_layout()
+plt.show()
