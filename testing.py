@@ -221,8 +221,50 @@ class TwoLayerNet:
 #     print(f'{key}: {diff}')
 
 
+# 9. Optimizer
+class SGD:
+    def __init__(self, lr=0.01):
+        self.lr = lr
+
+    def update(self, params, grads):
+        for key in params.keys():
+            params[key] -= self.lr * grads[key]
+
+
+class Momentum:
+    def __init__(self, lr=0.01, momentum=0.9):
+        self.lr = lr
+        self.momentum = momentum
+        self.v = None
+
+    def update(self, params, grads):
+        if self.v is None:
+            self.v = {key: np.zeros_like(val) for key, val in params.items()}
+
+        for key in params.keys():
+            self.v[key] = self.momentum * self.v[key] - self.lr * grads[key]
+            params[key] += self.v[key]
+
+
+class AdaGrad:
+    def __init__(self, lr=0.01):
+        self.lr = lr
+        self.h = None
+
+    def update(self, params, grads):
+        if self.h is None:
+            self.h = {key: np.zeros_like(val) for key, val in params.items()}
+
+        for key in params.keys():
+            self.h[key] += grads[key] * grads[key]
+            params[key] -= self.lr * grads[key] / (np.sqrt(self.h[key]) + 1e-7)
+
+
 # 7. Mnist dataset training process
 network = TwoLayerNet(784, 50, 10)
+optimizer = SGD()
+optimizer = AdaGrad()
+
 (x_train, t_train), (x_test, t_test) = load_mnist(one_hot_label=True)
 iters_num, learning_rate, train_size, batch_size = 10000, 0.1, x_train.shape[0], 100
 iter_per_epoch = max(1, train_size // batch_size)
@@ -234,9 +276,13 @@ for i in range(iters_num):
     x_batch = x_train[batch_mask]
     t_batch = t_train[batch_mask]
     # 2) calc gradient and update params
-    gradient = network.gradient(x_batch, t_batch)
-    for key in gradient.keys():
-        network.params[key] -= learning_rate * gradient[key]
+    grads = network.gradient(x_batch, t_batch)
+    # for key in gradient.keys():
+    #     network.params[key] -= learning_rate * gradient[key]
+
+    # Use optimizer to update params
+    optimizer.update(network.params, grads)
+
     # 3) calc loss
     loss = network.loss(x_batch, t_batch)
     train_loss_list.append(loss)
@@ -263,6 +309,7 @@ ax2.plot(x_acc, test_acc_list, label='Test acc', ls=':')
 ax2.set(xlabel='Epoch', ylabel='Accuracy', title='Training accuracy')
 ax2.grid(True, ls='--', alpha=0.5)
 ax2.legend(loc='lower right')
+ax2.set_ylim(0, 1.0)
 plt.suptitle('Monitor model training process')
 plt.tight_layout()
 plt.show()
