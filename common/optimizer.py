@@ -60,22 +60,23 @@ class Adam:
                 self.v[key] = np.zeros_like(val)    # 适应项，形状同参数
 
         self.iter += 1      # 第几次更新
+        lr_t = self.lr * np.sqrt(1.0 - self.beta2**self.iter) / (1.0 - self.beta1**self.iter)
         # 学习率校正公式/偏差修正（Bias Correction）：因为m和v初始为0，初期估计偏差很大。
         # 所以初期lr_t值快速下降，然后缓慢回升，逐渐恢复，趋近原始lr
         # 效果：初期小步探索防止一开始就走错方向；中期逐步恢复到设定的学习率；后期偏差修正几乎无影响
-        lr_t = self.lr * np.sqrt(1.0 - self.beta2**self.iter) / (1.0 - self.beta1**self.iter)
+
         for key in params.keys():
-            # 更新一阶矩（动量）：估计梯度方向（纯统计，无lr），类似Momentum，但用(1-β1)加权（梯度往哪走）
             self.m[key] = self.beta1*self.m[key] + (1-self.beta1)*grads[key]
-            # self.m[key] += (1 - self.beta1) * (grads[key] - self.m[key])
-
-            # 更新二阶矩（自适应学习率）：估计梯度大小（纯统计，无lr），类似AdaGrad，但用指数移动平均（坡度陡不陡）
-            self.v[key] = self.beta2*self.v[key] + (1-self.beta2)*(grads[key]**2)
-            # self.v[key] += (1 - self.beta2) * (grads[key]**2 - self.v[key])
-
-            # 参数更新：方向（m）÷ 缩放（√v）, 类似Momentum的方向 + AdaGrad的缩放
-            # 分子：lr_t * m（学习率 × 动量方向）, 分母：sqrt(v)（自适应缩放，梯度大的方向步长小）
+            self.v[key] = self.beta2*self.v[key] + (1-self.beta2)*grads[key]**2
             params[key] -= lr_t * self.m[key] / (np.sqrt(self.v[key]) + 1e-7)
+        # 更新一阶矩（动量）：估计梯度方向（纯统计，无lr），类似Momentum，但用(1-β1)加权（梯度往哪走）
+        # m = beta1*m + (1-beta1)*grads     m = β1*过去的方向 + (1-β1)*当前梯度
+        # 本质：对梯度做“指数加权平均” - 不全相信当前梯度（有噪声）也不全相信过去（可能过时），取“平滑后的方向”
+        # 更新二阶矩（自适应学习率）：估计梯度大小（纯统计，无lr），类似AdaGrad，但用指数移动平均（坡度陡不陡）
+        # v = beta2*v + (1-beta2)*grads^2   v = β2*过去的平方梯度 + (1-β2)*当前梯度平方
+        # 本质：记录“这个方向上震不震荡” - 梯度大 → v 大 → 后面步长会变小；梯度小 → v 小 → 步长变大
+        # 参数更新 = 稳定方向 / 自适应步长。 类似Momentum的方向 + AdaGrad的缩放
+        # 分子：lr_t * m（学习率 × 动量方向）, 分母：sqrt(v)（自适应缩放，梯度大的方向步长小）
 
 
 class Nesterov:
