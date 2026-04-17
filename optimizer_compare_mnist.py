@@ -10,6 +10,7 @@ from common.optimizer import *
 train_size, batch_size, iters_num = x_train.shape[0], 128, 2000
 optimizers = {'SGD': SGD(), 'Momentum': Momentum(), 'AdaGrad': AdaGrad(), 'Adam': Adam()}
 networks, train_loss = {}, {}
+
 for key in optimizers.keys():
     networks[key] = MultiLayerNet(784, [100, 100, 100, 100], 10)
     train_loss[key] = []
@@ -24,7 +25,6 @@ for i in range(iters_num):
     for key in optimizers.keys():
         grads = networks[key].gradient(x_batch, t_batch)
         optimizers[key].update(networks[key].params, grads)
-
         loss = networks[key].loss(x_batch, t_batch)
         train_loss[key].append(loss)
 
