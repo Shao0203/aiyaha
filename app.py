@@ -222,17 +222,29 @@ class TwoLayerNet:
         self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
         self.layers['Affine2'] = Affine(self.params['W2'], self.params['b2'])
 
+        # # 使用示例：
+        # # 训练完成后保存模型
+        # network = TwoLayerNet(784, 50, 10)
+        # # ... 训练代码
+        # network.save_model('trained_model.pkl')
+
+        # # 之后可以加载模型进行推理
+        # new_network = TwoLayerNet(784, 50, 10)  # 创建相同结构的网络
+        # new_network.load_model('trained_model.pkl')
+
+        # # 现在可以直接使用训练好的模型进行预测
+        # test_acc = new_network.accuracy(x_test, t_test)
+        # print(f"加载模型的测试准确率: {test_acc:.2%}")
+
 
 # 6. 梯度确认 gradient check
 # (x_train, t_train), (x_test, t_test) = load_mnist(one_hot_label=True)
 # network = TwoLayerNet(784, 50, 10)
 # x_batch = x_train[:3]
 # t_batch = t_train[:3]
-
 # grad_numerical = network.numerical_gradient(x_batch, t_batch)
 # grad_backpropa = network.gradient(x_batch, t_batch)
-# # 求各个权重的绝对误差的平均值
-# for key in grad_numerical.keys():
+# for key in grad_numerical.keys(): # 求各个权重的绝对误差的平均值
 #     diff = np.average(np.abs(grad_numerical[key] - grad_backpropa[key]))
 #     print(f'{key}: {str(diff)}')
 #     # W1: 3.830806987909411e-10
