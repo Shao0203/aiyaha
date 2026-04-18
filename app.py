@@ -160,8 +160,10 @@ class TwoLayerNet:
         self.params['b2'] = np.zeros(output_size)
         # init layers
         self.layers = OrderedDict()
+        # 隐藏层 = Affine1 + ReLU
         self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
         self.layers['Relu'] = Relu()
+        # 输出层 = Affine2 + Softmax
         self.layers['Affine2'] = Affine(self.params['W2'], self.params['b2'])
         self.lastLayer = SoftmaxWithLoss()
 
@@ -224,35 +226,72 @@ class TwoLayerNet:
 
 
 """
-        # # 使用示例：
-        # # 训练完成后保存模型
-        # network = TwoLayerNet(784, 50, 10)
-        # # ... 训练代码
-        # network.save_model('trained_model.pkl')
+# 使用示例：
+# 训练完成后保存模型
+network = TwoLayerNet(784, 50, 10)
+# ... 训练代码
+network.save_model('trained_model.pkl')
 
-        # # 之后可以加载模型进行推理
-        # new_network = TwoLayerNet(784, 50, 10)  # 创建相同结构的网络
-        # new_network.load_model('trained_model.pkl')
+# 之后可以加载模型进行推理
+new_network = TwoLayerNet(784, 50, 10)  # 创建相同结构的网络
+new_network.load_model('trained_model.pkl')
 
-        # # 现在可以直接使用训练好的模型进行预测
-        # test_acc = new_network.accuracy(x_test, t_test)
-        # print(f"加载模型的测试准确率: {test_acc:.2%}")
+# 现在可以直接使用训练好的模型进行预测
+test_acc = new_network.accuracy(x_test, t_test)
+print(f"加载模型的测试准确率: {test_acc:.2%}")
 
 
 # 6. 梯度确认 gradient check
-# (x_train, t_train), (x_test, t_test) = load_mnist(one_hot_label=True)
-# network = TwoLayerNet(784, 50, 10)
-# x_batch = x_train[:3]
-# t_batch = t_train[:3]
-# grad_numerical = network.numerical_gradient(x_batch, t_batch)
-# grad_backpropa = network.gradient(x_batch, t_batch)
-# for key in grad_numerical.keys(): # 求各个权重的绝对误差的平均值
-#     diff = np.average(np.abs(grad_numerical[key] - grad_backpropa[key]))
-#     print(f'{key}: {str(diff)}')
-#     # W1: 3.830806987909411e-10
-#     # b1: 2.2425444114388455e-09
-#     # W2: 5.6065134847026336e-09
-#     # b2: 1.3968564501476432e-07
+(x_train, t_train), (x_test, t_test) = load_mnist(one_hot_label=True)
+network = TwoLayerNet(784, 50, 10)
+x_batch = x_train[:3]
+t_batch = t_train[:3]
+grad_numerical = network.numerical_gradient(x_batch, t_batch)
+grad_backpropa = network.gradient(x_batch, t_batch)
+for key in grad_numerical.keys(): # 求各个权重的绝对误差的平均值
+    diff = np.average(np.abs(grad_numerical[key] - grad_backpropa[key]))
+    print(f'{key}: {str(diff)}')
+    # W1: 3.830806987909411e-10
+    # b1: 2.2425444114388455e-09
+    # W2: 5.6065134847026336e-09
+    # b2: 1.3968564501476432e-07
+
+
+# 10000层的深度神经网络
+class DeepNet:
+    def __init__(self, input_size, hidden_sizes, output_size):
+        # hidden_sizes = [100, 100, 100, ..., 100]  # 10000个隐藏层
+        self.layers = OrderedDict()
+        
+        # 第一个隐藏层
+        self.layers['Affine1'] = Affine(W1, b1)
+        self.layers['ReLU1'] = ReLU()
+        
+        # 中间隐藏层（循环创建）
+        for i in range(2, len(hidden_sizes) + 1):
+            self.layers[f'Affine{i}'] = Affine(Wi, bi)
+            self.layers[f'ReLU{i}'] = ReLU()
+        
+        # 输出层
+        self.layers[f'Affine{len(hidden_sizes)+1}'] = Affine(W_last, b_last)
+        self.lastLayer = SoftmaxWithLoss()
+
+
+可视化 = '''
+输入层(784个神经元)
+    ↓
+[Affine1 → ReLU1]   ← 住在隐藏层1
+    ↓
+[Affine2 → ReLU2]   ← 住在隐藏层2
+    ↓
+[Affine3 → ReLU3]   ← 住在隐藏层3
+    ↓
+    ...
+    ↓
+[Affine10000 → ReLU10000]  ← 住在隐藏层10000
+    ↓
+[Affine10001 → Softmax]    ← 住在输出层(10个神经元)
+'''
 """
 
 
