@@ -1,17 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
-
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
-
-
-def ReLU(x):
-    return np.maximum(0, x)
-
-
-def tanh(x):
-    return np.tanh(x)
+from common.functions import sigmoid, relu, tanh
 
 
 x = np.random.randn(1000, 100)
@@ -22,27 +11,22 @@ activations = {}
 for i in range(hidden_layer_size):
     if i != 0:
         x = activations[i-1]
+    w = np.random.randn(node_num, node_num) * 1  # 标准差为1
+    w = np.random.randn(node_num, node_num) * 0.01  # 标准差为0.01
+    w = np.random.randn(node_num, node_num) * np.sqrt(1.0 / node_num)  # 标准差为Xavier
+    w = np.random.randn(node_num, node_num) * np.sqrt(2.0 / node_num)  # 标准差为He
+    z = np.dot(x, w)
 
-    w = np.random.randn(node_num, node_num) * 1
-    a = np.dot(x, w)
-    z = sigmoid(a)
-    activations[i] = z
+    a = sigmoid(x)  # 激活函数sigmoid
+    a = tanh(x)     # 激活函数tanh
+    a = relu(z)     # 激活函数relu
+    activations[i] = a
 
-# plt.figure(figsize=(20, 5))
-# for i, a in activations.items():
-#     plt.subplot(1, len(activations), i+1)
-#     plt.title(f'{i+1}-layer')
-#     if i != 0:
-#         plt.yticks([])
-#     plt.hist(a.flatten(), bins=30, range=(0, 1))
-# plt.tight_layout()
-# plt.show()
-
-fig, axes = plt.subplots(1, len(activations), figsize=(20, 5))  # 更宽的画布
-axes = axes.flatten()
+# 绘制直方图
+fig, axes = plt.subplots(1, len(activations), figsize=(20, 5))
 for i, a in activations.items():
     ax = axes[i]
-    ax.set_title(f'{i+1}-layer')
+    ax.set(title=f'{i+1}-layer', ylim=(0, 7000))
     if i != 0:
         ax.set_yticks([])
     ax.hist(a.flatten(), bins=30, range=(0, 1))

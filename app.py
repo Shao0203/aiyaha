@@ -360,13 +360,17 @@ class Adam:
 # 7. 使用mnist数据，训练/测试 神经网络
 network = TwoLayerNet(784, 50, 10)
 optimizers = [SGD(), Momentum(), AdaGrad(), Adam()]
-optimizer = optimizers[-1]
+optimizer = optimizers[0]
 
 (x_train, t_train), (x_test, t_test) = load_mnist(one_hot_label=True)
-iters_num, learning_rate = 10000, 0.1,
-train_size, batch_size = x_train.shape[0], 100
+iters_num = 10000
+learning_rate = 0.1
+train_size = x_train.shape[0]
+batch_size = 100
 iter_per_epoch = max(1, train_size // batch_size)
-train_loss_list, train_acc_list, test_acc_list = [], [], []
+train_loss_list = []
+train_acc_list = []
+test_acc_list = []
 
 for i in range(iters_num):
     # (1) Get mini batch
