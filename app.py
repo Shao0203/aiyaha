@@ -256,45 +256,7 @@ for key in grad_numerical.keys(): # 求各个权重的绝对误差的平均值
     # W2: 5.6065134847026336e-09
     # b2: 1.3968564501476432e-07
 
-
-# 10000层的深度神经网络
-class DeepNet:
-    def __init__(self, input_size, hidden_sizes, output_size):
-        # hidden_sizes = [100, 100, 100, ..., 100]  # 10000个隐藏层
-        self.layers = OrderedDict()
-        
-        # 第一个隐藏层
-        self.layers['Affine1'] = Affine(W1, b1)
-        self.layers['ReLU1'] = ReLU()
-        
-        # 中间隐藏层（循环创建）
-        for i in range(2, len(hidden_sizes) + 1):
-            self.layers[f'Affine{i}'] = Affine(Wi, bi)
-            self.layers[f'ReLU{i}'] = ReLU()
-        
-        # 输出层
-        self.layers[f'Affine{len(hidden_sizes)+1}'] = Affine(W_last, b_last)
-        self.lastLayer = SoftmaxWithLoss()
-
-
-可视化 = '''
-输入层(784个神经元)
-    ↓
-[Affine1 → ReLU1]   ← 住在隐藏层1
-    ↓
-[Affine2 → ReLU2]   ← 住在隐藏层2
-    ↓
-[Affine3 → ReLU3]   ← 住在隐藏层3
-    ↓
-    ...
-    ↓
-[Affine10000 → ReLU10000]  ← 住在隐藏层10000
-    ↓
-[Affine10001 → Softmax]    ← 住在输出层(10个神经元)
-'''
-"""
-
-
+    
 # 6. 优化器 optimizer
 class SGD:
     def __init__(self, lr=0.01):
@@ -355,13 +317,48 @@ class Adam:
             self.m[key] = self.beta1 * self.m[key] + (1 - self.beta1) * grads[key]
             self.v[key] = self.beta2 * self.v[key] + (1 - self.beta2) * grads[key]**2
             params[key] -= lr_t * self.m[key] / (np.sqrt(self.v[key]) + 1e-7)
+    
+
+# 10000层的深度神经网络
+class DeepNet:
+    def __init__(self, input_size, hidden_sizes, output_size):
+        # hidden_sizes = [100, 100, 100, ..., 100]  # 10000个隐藏层
+        self.layers = OrderedDict()
+        
+        # 第一个隐藏层
+        self.layers['Affine1'] = Affine(W1, b1)
+        self.layers['ReLU1'] = ReLU()
+        
+        # 中间隐藏层（循环创建）
+        for i in range(2, len(hidden_sizes) + 1):
+            self.layers[f'Affine{i}'] = Affine(Wi, bi)
+            self.layers[f'ReLU{i}'] = ReLU()
+        
+        # 输出层
+        self.layers[f'Affine{len(hidden_sizes)+1}'] = Affine(W_last, b_last)
+        self.lastLayer = SoftmaxWithLoss()
+
+
+可视化 = '''
+输入层(784个神经元)
+    ↓
+[Affine1 → ReLU1]   ← 住在隐藏层1
+    ↓
+[Affine2 → ReLU2]   ← 住在隐藏层2
+    ↓
+[Affine3 → ReLU3]   ← 住在隐藏层3
+    ↓
+    ...
+    ↓
+[Affine10000 → ReLU10000]  ← 住在隐藏层10000
+    ↓
+[Affine10001 → Softmax]    ← 住在输出层(10个神经元)
+'''
+"""
 
 
 # 7. 使用mnist数据，训练/测试 神经网络
 network = TwoLayerNet(784, 50, 10)
-optimizers = [SGD(), Momentum(), AdaGrad(), Adam()]
-optimizer = optimizers[0]
-
 (x_train, t_train), (x_test, t_test) = load_mnist(one_hot_label=True)
 iters_num = 10000
 learning_rate = 0.1
@@ -380,9 +377,8 @@ for i in range(iters_num):
     # (2) Calc gradient
     grads = network.gradient(x_batch, t_batch)
     # (3) Update network params
-    # for key in grads.keys():
-    #     network.params[key] -= learning_rate * grads[key]
-    optimizer.update(network.params, grads)
+    for key in grads.keys():
+        network.params[key] -= learning_rate * grads[key]
     # (4) Calc training loss
     loss = network.loss(x_batch, t_batch)
     train_loss_list.append(loss)

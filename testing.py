@@ -1,34 +1,22 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from common.functions import sigmoid, relu, tanh
 
 
-x = np.random.randn(1000, 100)
-node_num = 100
-hidden_layer_size = 5
-activations = {}
+def standardize(data):
+    """将数据标准化为均值为0, 方差为1"""
+    return (data - np.mean(data)) / np.std(data)    # 公式 = (数据 - 均值) / 标准差
 
-for i in range(hidden_layer_size):
-    if i != 0:
-        x = activations[i-1]
-    w = np.random.randn(node_num, node_num) * 1  # 标准差为1
-    w = np.random.randn(node_num, node_num) * 0.01  # 标准差为0.01
-    w = np.random.randn(node_num, node_num) * np.sqrt(1.0 / node_num)  # 标准差为Xavier
-    w = np.random.randn(node_num, node_num) * np.sqrt(2.0 / node_num)  # 标准差为He
-    z = np.dot(x, w)
 
-    a = sigmoid(x)  # 激活函数sigmoid
-    a = tanh(x)     # 激活函数tanh
-    a = relu(z)     # 激活函数relu
-    activations[i] = a
+# 验证标准化效果
+original_data = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+standardized_data = standardize(original_data)
 
-# 绘制直方图
-fig, axes = plt.subplots(1, len(activations), figsize=(20, 5))
-for i, a in activations.items():
-    ax = axes[i]
-    ax.set(title=f'{i+1}-layer', ylim=(0, 7000))
-    if i != 0:
-        ax.set_yticks([])
-    ax.hist(a.flatten(), bins=30, range=(0, 1))
-plt.tight_layout()
-plt.show()
+print(f"原始数据: {original_data}")  # [10  20  30  40  50  60  70  80  90 100]
+print(f"原始均值: {original_data.mean():.4f}")          # 55.0000
+print(f"原始方差: {original_data.var():.4f}")           # 825.0000
+print(f"原始标差: {original_data.std():.4f}")           # 28.7228
+print("========================================")
+print(f"标准化后数据: {standardized_data}")
+# [-1.5666989  -1.21854359 -0.87038828 -0.52223297 -0.17407766 ...]
+print(f"标准化后均值: {standardized_data.mean():.4f}")  # 0.0000
+print(f"标准化后方差: {standardized_data.var():.4f}")   # 1.0000
+print(f"标准化后标差: {standardized_data.std():.4f}")   # 1.0000
