@@ -35,6 +35,7 @@ def softmax(x):
     np.max(x, axis=-1, keepdims=True)    # 值: [[3], [6]] 形状: (2,1) -> 完美广播 
     """
     x = x - np.max(x, axis=-1, keepdims=True)
+    x = np.clip(x, -50, 50)  # 防止极端值
     return np.exp(x) / np.sum(np.exp(x), axis=-1, keepdims=True)
     # # 书中写法: 转换x后，按每列操作（每列是一条数据）
     # if x.ndim == 2:
