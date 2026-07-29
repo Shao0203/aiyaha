@@ -112,6 +112,7 @@ class BatchNormalization:
         # backward时使用的中间数据
         self.batch_size = None
         self.xc = None
+        self.xn = None
         self.std = None
         self.dgamma = None
         self.dbeta = None
@@ -143,10 +144,8 @@ class BatchNormalization:
             self.xc = xc
             self.xn = xn
             self.std = std
-            self.running_mean = self.momentum * \
-                self.running_mean + (1-self.momentum) * mu
-            self.running_var = self.momentum * \
-                self.running_var + (1-self.momentum) * var
+            self.running_mean = self.momentum * self.running_mean + (1-self.momentum) * mu
+            self.running_var = self.momentum * self.running_var + (1-self.momentum) * var
         else:
             xc = x - self.running_mean
             xn = xc / ((np.sqrt(self.running_var + 10e-7)))
