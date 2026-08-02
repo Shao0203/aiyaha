@@ -32,8 +32,8 @@ class MultiLayerNet:
         for idx in range(1, self.hidden_layer_num+1):
             self.layers['Affine' + str(idx)] = Affine(self.params['W' + str(idx)], self.params['b' + str(idx)])
             self.layers['Activation' + str(idx)] = activation_layer[activation]()
-        last_idx = str(self.hidden_layer_num + 1)
-        self.layers['Affine' + last_idx] = Affine(self.params['W' + last_idx], self.params['b' + last_idx])
+        idx = self.hidden_layer_num + 1
+        self.layers['Affine' + str(idx)] = Affine(self.params['W' + str(idx)], self.params['b' + str(idx)])
         self.last_layer = SoftmaxWithLoss()
 
     def predict(self, x):
